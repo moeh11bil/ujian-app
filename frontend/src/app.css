@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Default (Light) Mode */
+  --bg-color: #f9fafb;
+  --text-color: #111827;
+  --card-bg: #ffffff;
+  --border-color: #e5e7eb;
+}
+
+.dark {
+  /* Dark Mode */
+  --bg-color: #0f172a;
+  --text-color: #f1f5f9;
+  --card-bg: #1e293b;
+  --border-color: #334155;
+}
+
+body {
+  @apply bg-[var(--bg-color)] text-[var(--text-color)] transition-colors duration-300;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Modern Button Styles */
+.btn {
+  @apply px-4 py-2 rounded-xl font-medium text-sm transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+  @apply btn bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500;
+}
+
+.btn-secondary {
+  @apply btn bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500;
+}
+
+.btn-accent {
+  @apply btn bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500;
+}
+
+.btn-info {
+  @apply btn bg-sky-500 text-white hover:bg-sky-600 focus:ring-sky-500;
+}
+
+.btn-error {
+  @apply btn bg-red-500 text-white hover:bg-red-600 focus:ring-red-500;
+}
+
+/* Modern Input Styles */
+.input-field {
+  @apply w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] focus:ring-2 focus:ring-indigo-500 transition-all duration-300;
+}
