@@ -76,6 +76,9 @@
        <Route path="/dashboard/backup">
           <ProtectedRoute component={async () => (await import('./pages/admin/BackupRestore.svelte')).default} allowedRoles={['admin']} />
         </Route>
+       <Route path="/dashboard/update">
+          <ProtectedRoute component={async () => (await import('./pages/admin/Update.svelte')).default} allowedRoles={['admin']} />
+        </Route>
        <Route path="/student/:id" let:params>
          <ProtectedRoute component={async () => (await import('./pages/admin/StudentDetail.svelte')).default} allowedRoles={['admin', 'guru']} id={params.id} />
        </Route>

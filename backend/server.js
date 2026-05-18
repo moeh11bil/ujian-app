@@ -104,6 +104,7 @@ app.use('/api/paket-soal', require('./src/routes/paket-soal'));
 app.use('/api/exam-cards', require('./src/routes/exam-cards'));
 app.use('/api/violations', require('./src/routes/violations'));
 app.use('/api/backup', require('./src/routes/backup'));
+app.use('/api/update', require('./src/routes/update'));
 
 app.use(errorHandler);
 
