@@ -55,15 +55,25 @@
   $: isStudentRoute = path.startsWith('/exam') || path.startsWith('/hasil') || path === '/exam-list';
 
   let appVersion = '';
+  let updateBehind = 0;
 
-  onMount(async () => {
+  async function checkUpdate() {
     try {
       const res = await fetch('/api/update/info', {
         headers: $token ? { Authorization: `Bearer ${$token}` } : {}
       });
       const json = await res.json();
-      if (json.success) appVersion = json.data.version;
+      if (json.success) {
+        appVersion = json.data.version;
+        updateBehind = json.data.behind || 0;
+      }
     } catch (e) {}
+  }
+
+  onMount(() => {
+    checkUpdate();
+    const interval = setInterval(checkUpdate, 120000);
+    return () => clearInterval(interval);
   });
 
   // Close sidebar when clicking outside (on larger screens)
@@ -316,12 +326,19 @@
             <a 
               href="javascript:void(0)"
               on:click={() => handleNavigate('/dashboard/update')} 
-              class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 transition-colors duration-150 {['/dashboard/update'].some(p => $currentPath === p || $currentPath.startsWith(p + '/')) ? 'bg-indigo-600/20 text-indigo-400' : 'hover:bg-slate-800/50 hover:text-white'}"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 transition-colors duration-150 relative {['/dashboard/update'].some(p => $currentPath === p || $currentPath.startsWith(p + '/')) ? 'bg-indigo-600/20 text-indigo-400' : 'hover:bg-slate-800/50 hover:text-white'}"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
               </svg>
-              {#if !sidebarCollapsed}<span class="text-sm">Update Aplikasi</span>{/if}
+              {#if !sidebarCollapsed}
+                <span class="text-sm flex-1">Update Aplikasi</span>
+                {#if updateBehind > 0}
+                  <span class="px-1.5 py-0.5 text-[10px] font-bold text-white bg-red-500 rounded-full">{updateBehind}</span>
+                {/if}
+              {:else if updateBehind > 0}
+                <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+              {/if}
             </a>
           </li>
         </ul>

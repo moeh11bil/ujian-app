@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { apiFetch } from '$lib/api';
   import toast from '../../lib/toast.js';
+  import Modal from '../../components/Modal.svelte';
 
   let info: any = null;
   let loading = true;
@@ -11,6 +12,20 @@
   let showLog = false;
   let jobId = '';
   let pollTimer: any = null;
+  let showConfirmModal = false;
+
+  function openConfirmModal() {
+    showConfirmModal = true;
+  }
+
+  function closeConfirmModal() {
+    showConfirmModal = false;
+  }
+
+  async function confirmUpdate() {
+    showConfirmModal = false;
+    await applyUpdate();
+  }
 
   onMount(() => {
     loadInfo();
@@ -41,16 +56,6 @@
   }
 
   async function applyUpdate() {
-    if (!confirm(
-      'Proses update akan:\n' +
-      '1. Git pull dari remote\n' +
-      '2. Install dependencies\n' +
-      '3. Jalankan migrasi database\n' +
-      '4. Rebuild frontend\n' +
-      '5. Restart server\n\n' +
-      'Lanjutkan?'
-    )) return;
-
     try {
       const res: any = await apiFetch('/update/apply', { method: 'POST' });
       if (res?.success) {
@@ -197,7 +202,7 @@
             <h3 class="text-lg font-semibold text-gray-800">Terapkan Pembaruan</h3>
             <p class="text-sm text-gray-500 mt-1">Update akan berjalan di background. Log akan terupdate otomatis.</p>
           </div>
-          <button on:click={applyUpdate} disabled={updating || !info.has_remote}
+          <button on:click={openConfirmModal} disabled={updating || !info.has_remote}
             class="group px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {#if updating}
@@ -258,3 +263,54 @@
     {/if}
   </div>
 </div>
+
+<Modal show={showConfirmModal} title="Konfirmasi Update" onClose={closeConfirmModal}>
+  <div class="space-y-4">
+    <div class="flex items-start gap-3">
+      <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm text-gray-600">Proses update akan menjalankan:</p>
+        <ul class="mt-2 space-y-1 text-sm text-gray-600">
+          <li class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+            Git pull dari remote repository
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+            Install dependencies (backend & frontend)
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+            Jalankan migrasi database
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+            Build frontend
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+            Restart server
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div slot="footer" class="flex justify-end gap-3">
+    <button
+      on:click={closeConfirmModal}
+      class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+    >
+      Batal
+    </button>
+    <button
+      on:click={confirmUpdate}
+      class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg rounded-lg transition-all"
+    >
+      Lanjutkan Update
+    </button>
+  </div>
+</Modal>
