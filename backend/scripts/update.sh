@@ -1,7 +1,8 @@
 #!/bin/bash
 LOG_FILE="$1"
-PROJECT_DIR="/home/hilya/Aplikasi/ujian-app"
-BACKEND_DIR="$PROJECT_DIR/backend"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+BACKEND_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(dirname "$BACKEND_DIR")"
 FRONTEND_DIR="$PROJECT_DIR/frontend"
 LOCK_FILE="$BACKEND_DIR/backups/update.lock"
 
