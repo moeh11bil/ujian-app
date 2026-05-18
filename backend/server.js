@@ -8,6 +8,7 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./src/middleware/errorHandler');
 const logger = require('./src/utils/logger');
 
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
@@ -66,10 +67,6 @@ db.getConnection()
     logger.error({ err }, 'Database connection failed');
   });
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Online Exam API is running!' });
-});
-
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -106,11 +103,28 @@ app.use('/api/violations', require('./src/routes/violations'));
 app.use('/api/backup', require('./src/routes/backup'));
 app.use('/api/update', require('./src/routes/update'));
 
-app.use(errorHandler);
+if (isProduction) {
+  const frontendDist = path.join(__dirname, '../frontend/dist');
+  app.use(express.static(frontendDist));
 
-app.use('*', (req, res) => {
-  res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Route not found' } });
-});
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(frontendDist, 'index.html'));
+    } else {
+      res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Route not found' } });
+    }
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.json({ message: 'Online Exam API is running!' });
+  });
+
+  app.use('*', (req, res) => {
+    res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Route not found' } });
+  });
+}
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   logger.info({ port: PORT }, 'Server is running');

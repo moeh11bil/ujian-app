@@ -19,6 +19,19 @@ const LOG_DIR = path.join(BACKEND_DIR, 'backups');
 
 let currentJob = null;
 
+function isRunning(pid) {
+  try {
+    return process.kill(pid, 0);
+  } catch {
+    return false;
+  }
+}
+
+function cleanupJob() {
+  currentJob = null;
+  try { fs.unlinkSync(path.join(LOG_DIR, 'update.lock')); } catch (e) {}
+}
+
 function getVersion() {
   try {
     return JSON.parse(fs.readFileSync(PKG_PATH, 'utf-8')).version || '1.0.0';
@@ -124,6 +137,7 @@ router.get('/status/:jobId', authenticateToken, authorizeRole(['admin']), async 
   const logPath = logFile(jobId);
 
   if (!fs.existsSync(logPath)) {
+    cleanupJob();
     return res.json({ success: true, data: { running: false, logs: [], done: false } });
   }
 
@@ -133,13 +147,25 @@ router.get('/status/:jobId', authenticateToken, authorizeRole(['admin']), async 
   const done = content.includes('DONE');
 
   if (done) {
-    currentJob = null;
-    try { fs.unlinkSync(path.join(LOG_DIR, 'update.lock')); } catch (e) {}
+    cleanupJob();
+    return res.json({
+      success: true,
+      data: { running: false, logs, done }
+    });
+  }
+
+  let running = false;
+  if (currentJob && currentJob.id === jobId) {
+    running = isRunning(currentJob.pid);
+  }
+
+  if (!running) {
+    cleanupJob();
   }
 
   res.json({
     success: true,
-    data: { running: !done, logs, done }
+    data: { running, logs, done }
   });
 });
 
