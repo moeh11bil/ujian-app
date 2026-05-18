@@ -2,7 +2,6 @@
   import { navigate } from 'svelte-routing';
   import { onMount } from 'svelte';
   import NotificationBell from '../components/NotificationBell.svelte';
-  import DarkModeToggle from '../components/DarkModeToggle.svelte';
   import { user, token, authActions } from '../stores/authStore';
   import { currentPath, updatePath } from '../stores/routeStore';
 
@@ -54,6 +53,18 @@
 
   // Check if current route is student route (should not show admin sidebar)
   $: isStudentRoute = path.startsWith('/exam') || path.startsWith('/hasil') || path === '/exam-list';
+
+  let appVersion = '';
+
+  onMount(async () => {
+    try {
+      const res = await fetch('/api/update/info', {
+        headers: $token ? { Authorization: `Bearer ${$token}` } : {}
+      });
+      const json = await res.json();
+      if (json.success) appVersion = json.data.version;
+    } catch (e) {}
+  });
 
   // Close sidebar when clicking outside (on larger screens)
   onMount(() => {
@@ -317,8 +328,15 @@
       </div>
     </nav>
 
-    <!-- Footer / Logout -->
-    <div class="p-4 mt-auto border-t border-slate-800/50">
+    <!-- Footer / Version & Logout -->
+    <div class="p-4">
+      {#if appVersion && !sidebarCollapsed}
+        <div class="px-3 py-2 mb-2 text-xs text-slate-500">
+          v{appVersion}
+        </div>
+      {/if}
+    </div>
+    <div class="p-4 pt-0 mt-auto border-t border-slate-800/50">
       <button 
         on:click={handleLogout} 
         class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors duration-150"
@@ -369,7 +387,6 @@
 
         <div class="flex items-center space-x-3">
           <NotificationBell />
-          <DarkModeToggle />
           
           <div class="flex items-center ml-2 pl-3 border-l border-gray-200">
             {#if $user && $user.nama}

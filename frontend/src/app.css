@@ -3,23 +3,14 @@
 @tailwind utilities;
 
 :root {
-  /* Default (Light) Mode */
   --bg-color: #f9fafb;
   --text-color: #111827;
   --card-bg: #ffffff;
   --border-color: #e5e7eb;
 }
 
-.dark {
-  /* Dark Mode */
-  --bg-color: #0f172a;
-  --text-color: #f1f5f9;
-  --card-bg: #1e293b;
-  --border-color: #334155;
-}
-
 body {
-  @apply bg-[var(--bg-color)] text-[var(--text-color)] transition-colors duration-300;
+  @apply bg-[var(--bg-color)] text-[var(--text-color)];
   font-family: 'Inter', sans-serif;
 }
 

@@ -95,3 +95,4 @@ File/folder berikut otomatis diabaikan git:
 - **Jangan pernah commit file `.env`** — isinya password database dan secret key
 - Sebelum update via halaman web, fitur **Backup** otomatis dapat dijalankan terlebih dahulu
 - Jika server mati setelah update, jalankan ulang: `cd backend && node server.js`
+- git remote set-url origin https://github.com/moeh11bil/ujian-app.git
