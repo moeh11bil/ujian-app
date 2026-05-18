@@ -2,10 +2,11 @@ const express = require('express');
 const authenticateToken = require('../../middleware/auth');
 const authorizeRole = require('../../middleware/authorize');
 const { apiLimiter } = require('../../middleware/rateLimiter');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const util = require('util');
+const crypto = require('crypto');
 const router = express.Router();
 
 const execAsync = util.promisify(exec);
@@ -13,6 +14,10 @@ const ROOT_DIR = path.join(__dirname, '../../..');
 const BACKEND_DIR = path.join(__dirname, '../..');
 const FRONTEND_DIR = path.join(ROOT_DIR, 'frontend');
 const PKG_PATH = path.join(BACKEND_DIR, 'package.json');
+const SCRIPT_PATH = path.join(BACKEND_DIR, 'scripts/update.sh');
+const LOG_DIR = path.join(BACKEND_DIR, 'backups');
+
+let currentJob = null;
 
 function getVersion() {
   try {
@@ -23,11 +28,15 @@ function getVersion() {
 }
 
 async function execGit(dir, cmd) {
-  const { stdout, stderr } = await execAsync(`git ${cmd}`, { cwd: dir, timeout: 30000 });
+  const { stdout } = await execAsync(`git ${cmd}`, { cwd: dir, timeout: 30000 });
   return stdout.trim();
 }
 
-// GET /api/update/info - Get current version and update status
+function logFile(id) {
+  return path.join(LOG_DIR, `update-${id}.log`);
+}
+
+// GET /api/update/info
 router.get('/info', authenticateToken, authorizeRole(['admin']), async (req, res) => {
   try {
     let currentCommit = '-';
@@ -41,7 +50,7 @@ router.get('/info', authenticateToken, authorizeRole(['admin']), async (req, res
       currentCommit = await execGit(ROOT_DIR, 'rev-parse --short HEAD');
       currentBranch = await execGit(ROOT_DIR, 'rev-parse --abbrev-ref HEAD');
     } catch (e) {
-      error = 'Git repo tidak ditemukan atau belum diinisialisasi';
+      error = 'Git repo tidak ditemukan';
     }
 
     try {
@@ -71,6 +80,7 @@ router.get('/info', authenticateToken, authorizeRole(['admin']), async (req, res
         remote_url: remoteUrl,
         behind,
         has_remote: hasRemote,
+        running: currentJob !== null,
         error
       }
     });
@@ -79,81 +89,58 @@ router.get('/info', authenticateToken, authorizeRole(['admin']), async (req, res
   }
 });
 
-// POST /api/update/apply - Pull latest code, install deps, migrate, rebuild, restart
-router.post('/apply', authenticateToken, authorizeRole(['admin']), apiLimiter, async (req, res) => {
-  const logs = [];
-
-  function log(msg) {
-    logs.push({ time: new Date().toISOString(), message: msg });
+// POST /api/update/apply - Jalankan update di background
+router.post('/apply', authenticateToken, authorizeRole(['admin']), async (req, res) => {
+  if (currentJob) {
+    return res.status(400).json({ success: false, message: 'Update sedang berjalan' });
   }
 
-  try {
-    log('Memulai proses update...');
+  const jobId = Date.now().toString(36) + crypto.randomBytes(4).toString('hex');
+  const logPath = logFile(jobId);
+  const lockPath = path.join(LOG_DIR, 'update.lock');
 
-    // 1. Git pull
-    log('Mengambil kode terbaru dari remote...');
-    try {
-      const pullResult = await execGit(ROOT_DIR, 'pull origin main 2>&1');
-      log(pullResult);
-    } catch (e) {
-      try {
-        const pullResult = await execGit(ROOT_DIR, 'pull origin master 2>&1');
-        log(pullResult);
-      } catch (e2) {
-        throw new Error('Gagal git pull: ' + (e2.stderr || e2.message));
-      }
-    }
+  fs.writeFileSync(lockPath, jobId);
 
-    // 2. Install backend dependencies
-    log('Menginstall dependensi backend...');
-    await execAsync('npm install', { cwd: BACKEND_DIR, timeout: 120000 });
-    log('Dependensi backend selesai');
+  const script = spawn('bash', [SCRIPT_PATH, logPath], {
+    detached: true,
+    stdio: 'ignore',
+    env: { ...process.env, HOME: process.env.HOME }
+  });
 
-    // 3. Install frontend dependencies
-    log('Menginstall dependensi frontend...');
-    await execAsync('npm install', { cwd: FRONTEND_DIR, timeout: 120000 });
-    log('Dependensi frontend selesai');
+  currentJob = { id: jobId, pid: script.pid, logPath };
 
-    // 4. Run database migrations
-    log('Menjalankan migrasi database...');
-    const migrateScript = path.join(BACKEND_DIR, 'update-schema.js');
-    if (fs.existsSync(migrateScript)) {
-      try {
-        const { stdout } = await execAsync('node update-schema.js', { cwd: BACKEND_DIR, timeout: 60000 });
-        log(stdout || 'Migrasi selesai');
-      } catch (e) {
-        log('Warning: Migrasi gagal: ' + (e.stderr || e.message));
-      }
-    } else {
-      log('Tidak ada file migrasi');
-    }
+  script.unref();
 
-    // 5. Rebuild frontend
-    log('Membangun ulang frontend...');
-    await execAsync('npm run build', { cwd: FRONTEND_DIR, timeout: 120000 });
-    log('Frontend selesai dibangun');
+  res.json({
+    success: true,
+    message: 'Update dimulai',
+    job_id: jobId
+  });
+});
 
-    log('Update selesai! Server akan restart...');
+// GET /api/update/status/:jobId - Cek status update
+router.get('/status/:jobId', authenticateToken, authorizeRole(['admin']), async (req, res) => {
+  const jobId = req.params.jobId;
+  const logPath = logFile(jobId);
 
-    res.json({
-      success: true,
-      message: 'Update berhasil. Server akan restart...',
-      logs
-    });
-
-    // 6. Restart server after response is sent
-    setTimeout(() => {
-      process.exit(0);
-    }, 1000);
-
-  } catch (error) {
-    log('ERROR: ' + error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Update gagal: ' + error.message,
-      logs
-    });
+  if (!fs.existsSync(logPath)) {
+    return res.json({ success: true, data: { running: false, logs: [], done: false } });
   }
+
+  const content = fs.readFileSync(logPath, 'utf-8');
+  const lines = content.trim().split('\n').filter(Boolean);
+  const logs = lines.map(l => ({ time: new Date().toISOString(), message: l }));
+  const done = content.includes('DONE');
+
+  if (done) {
+    currentJob = null;
+    try { fs.unlinkSync(path.join(LOG_DIR, 'update.lock')); } catch (e) {}
+  }
+
+  res.json({
+    success: true,
+    data: { running: !done, logs, done }
+  });
 });
 
 module.exports = router;

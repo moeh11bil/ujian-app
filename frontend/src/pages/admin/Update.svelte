@@ -1,24 +1,38 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { apiFetch } from '$lib/api';
   import toast from '../../lib/toast.js';
 
   let info: any = null;
   let loading = true;
   let updating = false;
-  let updateLogs: any[] = [];
+  let updateLogs: string[] = [];
   let updateDone = false;
   let showLog = false;
+  let jobId = '';
+  let pollTimer: any = null;
 
   onMount(() => {
     loadInfo();
+  });
+
+  onDestroy(() => {
+    if (pollTimer) clearInterval(pollTimer);
   });
 
   async function loadInfo() {
     try {
       loading = true;
       const res: any = await apiFetch('/update/info');
-      if (res?.success) info = res.data;
+      if (res?.success) {
+        info = res.data;
+        if (info.running) {
+          toast.info('Update sedang berjalan, memantau log...');
+          showLog = true;
+          updating = true;
+          startPolling();
+        }
+      }
     } catch (err: any) {
       toast.error('Gagal memuat info update');
     } finally {
@@ -38,25 +52,46 @@
     )) return;
 
     try {
-      updating = true;
-      updateLogs = [];
-      showLog = true;
-      updateDone = false;
-
       const res: any = await apiFetch('/update/apply', { method: 'POST' });
-      if (res?.logs) updateLogs = res.logs;
-
       if (res?.success) {
-        toast.success(res.message || 'Update berhasil');
-        updateDone = true;
+        jobId = res.job_id;
+        toast.success('Update dimulai');
+        updating = true;
+        showLog = true;
+        updateDone = false;
+        updateLogs = [];
+        startPolling();
       } else {
-        toast.error(res.message || 'Update gagal');
+        toast.error(res.message || 'Gagal memulai update');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Update gagal');
-    } finally {
-      updating = false;
+      toast.error(err.message || 'Gagal memulai update');
     }
+  }
+
+  function startPolling() {
+    pollTimer = setInterval(async () => {
+      try {
+        const res: any = await apiFetch(`/update/status/${jobId}`);
+        if (res?.success && res.data) {
+          updateLogs = res.data.logs.map((l: any) => l.message);
+          if (res.data.done) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+            updating = false;
+            updateDone = true;
+            toast.success('Update selesai! Server akan restart...');
+          }
+        }
+      } catch (e) {
+        // server mungkin restart, stop polling
+        clearInterval(pollTimer);
+        pollTimer = null;
+        updating = false;
+        updateDone = true;
+        updateLogs = [...updateLogs, 'Server restart terdeteksi. Update selesai!'];
+      }
+    }, 2000);
   }
 
   function getStatusIcon() {
@@ -160,7 +195,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-lg font-semibold text-gray-800">Terapkan Pembaruan</h3>
-            <p class="text-sm text-gray-500 mt-1">Update akan mengambil kode terbaru, migrasi database, dan restart server</p>
+            <p class="text-sm text-gray-500 mt-1">Update akan berjalan di background. Log akan terupdate otomatis.</p>
           </div>
           <button on:click={applyUpdate} disabled={updating || !info.has_remote}
             class="group px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -170,7 +205,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
               </svg>
-              Mengupdate...
+              Sedang berjalan...
             {:else}
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -188,24 +223,20 @@
           <h3 class="text-lg font-semibold text-gray-800">Log Update</h3>
           {#if updateDone}
             <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Selesai</span>
-          {:else if updating}
-            <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">Sedang berjalan...</span>
           {:else}
-            <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">Gagal</span>
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold animate-pulse">Sedang berjalan...</span>
           {/if}
         </div>
         <div class="p-4">
-          <div class="bg-gray-900 rounded-xl p-4 font-mono text-xs max-h-80 overflow-y-auto space-y-1">
+          <div class="bg-gray-900 rounded-xl p-4 font-mono text-xs max-h-96 overflow-y-auto space-y-1">
             {#each updateLogs as log}
-              <div class="text-gray-300">
-                <span class="text-gray-500">[{new Date(log.time).toLocaleTimeString('id-ID')}]</span> {log.message}
-              </div>
+              <div class="text-gray-300">{log}</div>
             {/each}
-            {#if updating}
-              <div class="text-yellow-400 animate-pulse">Menunggu respon server...</div>
-            {:else if updateDone}
-              <div class="text-green-400">✓ Proses selesai. Server akan restart secara otomatis.</div>
-              <div class="text-yellow-400 mt-2">⚠ Halaman akan terputus saat server restart. Refresh setelah beberapa saat.</div>
+            {#if !updateDone}
+              <div class="text-yellow-400 animate-pulse">⏳ Proses berjalan...</div>
+            {:else}
+              <div class="text-green-400 mt-2">✓ Update selesai!</div>
+              <div class="text-yellow-400 mt-1">⚠ Server akan restart. Refresh halaman setelah beberapa saat.</div>
             {/if}
           </div>
         </div>
