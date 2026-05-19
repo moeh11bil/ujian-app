@@ -50,7 +50,7 @@ function logFile(id) {
 }
 
 // GET /api/update/info
-router.get('/info', authenticateToken, authorizeRole(['admin']), async (req, res) => {
+router.get('/info', authenticateToken, authorizeRole(['admin', 'guru']), async (req, res) => {
   try {
     let currentCommit = '-';
     let currentBranch = '-';
