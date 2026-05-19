@@ -16,13 +16,13 @@ router.get('/', authenticateToken, paginate, async (req, res) => {
     if (req.user.role === 'siswa') {
       logger.debug({ kelasId: req.user.kelas_id }, 'Fetching active exams for student');
       if (req.user.kelas_id) {
-        query = 'SELECT u.*, k.nama_kelas FROM ujian u LEFT JOIN kelas k ON u.kelas_id = k.id WHERE u.status = "aktif" AND (u.kelas_id IS NULL OR u.kelas_id = ?) ORDER BY u.waktu_mulai DESC';
+        query = 'SELECT u.*, k.nama_kelas, COALESCE(COUNT(s.id), 0) as jumlah_soal FROM ujian u LEFT JOIN kelas k ON u.kelas_id = k.id LEFT JOIN soal s ON s.ujian_id = u.id WHERE u.status = "aktif" AND (u.kelas_id IS NULL OR u.kelas_id = ?) GROUP BY u.id ORDER BY u.waktu_mulai DESC';
         params = [req.user.kelas_id];
       } else {
-        query = 'SELECT u.*, k.nama_kelas FROM ujian u LEFT JOIN kelas k ON u.kelas_id = k.id WHERE u.status = "aktif" AND u.kelas_id IS NULL ORDER BY u.waktu_mulai DESC';
+        query = 'SELECT u.*, k.nama_kelas, COALESCE(COUNT(s.id), 0) as jumlah_soal FROM ujian u LEFT JOIN kelas k ON u.kelas_id = k.id LEFT JOIN soal s ON s.ujian_id = u.id WHERE u.status = "aktif" AND u.kelas_id IS NULL GROUP BY u.id ORDER BY u.waktu_mulai DESC';
       }
     } else {
-      query = 'SELECT u.*, k.nama_kelas FROM ujian u LEFT JOIN kelas k ON u.kelas_id = k.id ORDER BY u.created_at DESC';
+      query = 'SELECT u.*, k.nama_kelas, COALESCE(COUNT(s.id), 0) as jumlah_soal FROM ujian u LEFT JOIN kelas k ON u.kelas_id = k.id LEFT JOIN soal s ON s.ujian_id = u.id GROUP BY u.id ORDER BY u.created_at DESC';
     }
 
     if (req.pagination) {
