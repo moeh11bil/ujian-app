@@ -872,3 +872,15 @@ app.use(sanitizeInput);
 4. **Test thoroughly** after each phase
 
 Would you like me to implement any specific remaining items?
+
+---
+
+## 2026-05-19
+
+### Mobile Admin Responsive & Update Badge Fix
+- **Modified** `frontend/src/layouts/AdminGuruLayout.svelte` — sidebar jadi `fixed` overlay di mobile via CSS media query + dynamic class; hapus icon, subtitle LMS, tombol X; tambah overflow hidden cegah bleed; sidebar otomatis tutup setelah klik link
+- **Modified** `frontend/src/pages/admin/Exams.svelte` — flex-wrap action buttons, truncate date text
+- **Modified** `frontend/src/pages/admin/Users.svelte` — pagination bar flex-col di mobile
+- **Modified** `frontend/src/pages/admin/Students.svelte` — hapus whitespace-nowrap nama, flex-nowrap buttons, bottom bar full-width
+- **Modified** `frontend/src/pages/admin/UnifiedQuestionBank.svelte` — max-w responsive untuk teks soal
+- **Fixed** `backend/src/routes/update.js` — ganti `git remote update` jadi `git fetch origin master --depth=1` biar gak hang saat banyak commit
