@@ -884,3 +884,4 @@ Would you like me to implement any specific remaining items?
 - **Modified** `frontend/src/pages/admin/Students.svelte` — hapus whitespace-nowrap nama, flex-nowrap buttons, bottom bar full-width
 - **Modified** `frontend/src/pages/admin/UnifiedQuestionBank.svelte` — max-w responsive untuk teks soal
 - **Fixed** `backend/src/routes/update.js` — ganti `git remote update` jadi `git fetch origin master --depth=1` biar gak hang saat banyak commit
+- **Modified** `frontend/src/pages/admin/Update.svelte` — progress bar + step list + collapsible terminal log; fix remote url overflow
