@@ -9,10 +9,54 @@
   let updating = false;
   let updateLogs: string[] = [];
   let updateDone = false;
-  let showLog = false;
   let jobId = '';
   let pollTimer: any = null;
   let showConfirmModal = false;
+  let logsExpanded = false;
+
+  const steps = [
+    { key: 'start', label: 'Memulai proses update', weight: 5 },
+    { key: 'git_pull', label: 'Git pull dari repository', weight: 15 },
+    { key: 'backend_deps', label: 'Install backend dependencies', weight: 25 },
+    { key: 'frontend_deps', label: 'Install frontend dependencies', weight: 20 },
+    { key: 'build', label: 'Build frontend', weight: 25 },
+    { key: 'restart', label: 'Restart server', weight: 10 },
+  ];
+
+  $: currentStep = getCurrentStep();
+  $: progress = getProgress();
+  $: currentLabel = currentStep ? steps.find(s => s.key === currentStep)?.label || '' : '';
+
+  function getCurrentStep() {
+    if (updateDone) return 'done';
+    if (updateLogs.length === 0) return '';
+    for (let i = updateLogs.length - 1; i >= 0; i--) {
+      const log = updateLogs[i].toLowerCase();
+      if (log.includes('server berhasil direstart')) return 'restart';
+      if (log.includes('update selesai')) return 'restart';
+      if (log.includes('build frontend')) return 'build';
+      if (log.includes('install frontend')) return 'frontend_deps';
+      if (log.includes('install backend')) return 'backend_deps';
+      if (log.includes('git pull')) return 'git_pull';
+      if (log.includes('memulai proses update')) return 'start';
+    }
+    return 'start';
+  }
+
+  function getProgress() {
+    if (updateDone) return 100;
+    let pct = 0;
+    for (const s of steps) {
+      if (currentStep === s.key) {
+        pct += s.weight * 0.3;
+        break;
+      }
+      pct += s.weight;
+      const idx = steps.findIndex(st => st.key === currentStep);
+      if (steps.indexOf(s) < idx) continue;
+    }
+    return Math.min(Math.round(pct), 99);
+  }
 
   function openConfirmModal() {
     showConfirmModal = true;
@@ -42,8 +86,8 @@
       if (res?.success) {
         info = res.data;
         if (info.running) {
-          toast.info('Update sedang berjalan, memantau log...');
-          showLog = true;
+          toast.info('Update sedang berjalan, memantau progres...');
+          logsExpanded = false;
           updating = true;
           startPolling();
         }
@@ -62,9 +106,9 @@
         jobId = res.job_id;
         toast.success('Update dimulai');
         updating = true;
-        showLog = true;
         updateDone = false;
         updateLogs = [];
+        logsExpanded = false;
         startPolling();
       } else {
         toast.error(res.message || 'Gagal memulai update');
@@ -89,7 +133,6 @@
           }
         }
       } catch (e) {
-        // server mungkin restart, stop polling
         clearInterval(pollTimer);
         pollTimer = null;
         updating = false;
@@ -184,26 +227,26 @@
 
       <!-- Remote Info -->
       <div class="bg-white rounded-2xl shadow-lg p-5 mb-8">
-        <div class="flex items-center gap-3">
-          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center gap-3 min-w-0">
+          <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
           </svg>
-          <div>
+          <div class="min-w-0">
             <div class="text-sm text-gray-500">Remote Repository</div>
-            <div class="text-sm font-medium text-gray-800">{info.remote_url}</div>
+            <div class="text-sm font-medium text-gray-800 truncate">{info.remote_url}</div>
           </div>
         </div>
       </div>
 
       <!-- Action Button -->
       <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h3 class="text-lg font-semibold text-gray-800">Terapkan Pembaruan</h3>
-            <p class="text-sm text-gray-500 mt-1">Update akan berjalan di background. Log akan terupdate otomatis.</p>
+            <p class="text-sm text-gray-500 mt-1">Update akan berjalan di background.</p>
           </div>
           <button on:click={openConfirmModal} disabled={updating || !info.has_remote}
-            class="group px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            class="group px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap self-start"
           >
             {#if updating}
               <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -219,34 +262,90 @@
             {/if}
           </button>
         </div>
-      </div>
 
-      <!-- Update Logs -->
-      {#if showLog}
-      <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-gray-800">Log Update</h3>
+        <!-- Progress Area -->
+        {#if updating || updateDone}
+        <div class="mt-6 border-t border-gray-100 pt-6">
           {#if updateDone}
-            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Selesai</span>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Update selesai!</p>
+                <p class="text-xs text-gray-500">Server akan restart. Refresh halaman setelah beberapa saat.</p>
+              </div>
+            </div>
           {:else}
-            <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold animate-pulse">Sedang berjalan...</span>
+            <div class="flex items-center gap-3 mb-4">
+              <svg class="w-5 h-5 text-indigo-600 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-gray-800 truncate">{currentLabel || 'Memulai...'}</p>
+                <p class="text-xs text-gray-500">Progress: {progress}%</p>
+              </div>
+            </div>
           {/if}
-        </div>
-        <div class="p-4">
-          <div class="bg-gray-900 rounded-xl p-4 font-mono text-xs max-h-96 overflow-y-auto space-y-1">
+
+          <!-- Progress Bar -->
+          <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+            <div class="h-2.5 rounded-full transition-all duration-500 ease-out {updateDone ? 'bg-green-500' : 'bg-gradient-to-r from-indigo-500 to-purple-500'}" style="width: {progress}%"></div>
+          </div>
+
+          <!-- Step List -->
+          <div class="space-y-1.5 mb-4">
+            {#each steps as step}
+              <div class="flex items-center gap-2 text-xs">
+                {#if updateDone}
+                  <svg class="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                {:else if steps.findIndex(s => s.key === currentStep) > steps.indexOf(step)}
+                  <svg class="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                {:else if currentStep === step.key}
+                  <svg class="w-3.5 h-3.5 text-indigo-500 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                {:else}
+                  <svg class="w-3.5 h-3.5 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                {/if}
+                <span class="{steps.findIndex(s => s.key === currentStep) > steps.indexOf(step) ? 'text-gray-500' : currentStep === step.key ? 'text-indigo-700 font-medium' : 'text-gray-400'}">{step.label}</span>
+              </div>
+            {/each}
+          </div>
+
+          <!-- Toggle Logs -->
+          <button on:click={() => logsExpanded = !logsExpanded} class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+            <svg class="w-3.5 h-3.5 transition-transform {logsExpanded ? 'rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            {logsExpanded ? 'Sembunyikan' : 'Tampilkan'} Detail Log
+          </button>
+
+          {#if logsExpanded}
+          <div class="mt-3 bg-gray-900 rounded-xl p-4 font-mono text-xs max-h-64 overflow-y-auto space-y-1">
             {#each updateLogs as log}
               <div class="text-gray-300">{log}</div>
             {/each}
             {#if !updateDone}
               <div class="text-yellow-400 animate-pulse">⏳ Proses berjalan...</div>
             {:else}
-              <div class="text-green-400 mt-2">✓ Update selesai!</div>
-              <div class="text-yellow-400 mt-1">⚠ Server akan restart. Refresh halaman setelah beberapa saat.</div>
+              <div class="text-green-400">✓ Update selesai!</div>
             {/if}
           </div>
+          {/if}
         </div>
+        {/if}
       </div>
-      {/if}
 
     {:else}
       <div class="bg-white rounded-2xl shadow-lg p-12 text-center">
