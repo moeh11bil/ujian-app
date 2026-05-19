@@ -898,3 +898,15 @@ Would you like me to implement any specific remaining items?
 - **Fixed** `backend/src/routes/reset_requests.js` — typo `ujianId` → `examId` (variabel undefined) yang bikin 500 error saat siswa minta reset
 - **Added** `backend/src/routes/hasil.js` — route `DELETE /reset-student/:userId` untuk admin reset status ujian siswa dari halaman Students
 - **Exported** `frontend/src/lib/api.ts` — export `BASE_URL` biar bisa dipakai di komponen lain
+
+### Fix Gambar Tidak Tampil di HP (Hardcoded localhost)
+- **Fixed** `frontend/src/pages/student/ExamInterface.svelte` — ganti hardcoded `localhost:3000` di gambar soal & pilihan jadi `uploadBase` dari `BASE_URL`
+- **Fixed** `frontend/src/pages/admin/GradingDetail.svelte` — ganti hardcoded `localhost:3000` di gambar soal
+- **Fixed** `frontend/src/pages/admin/UnifiedQuestionBank.svelte` — ganti hardcoded `localhost:3000` di export & preview edit gambar
+
+### UI Exam Interface & Pelanggaran
+- **Modified** `frontend/src/pages/student/ExamInterface.svelte` — tombol "Kirim Jawaban" pindah ke akhir soal (gantikan "Selanjutnya"); sidebar nomor soal jadi collapsible `<details>` default collapsed; tambah `max-lg:hidden` biar gak dobel panel di HP
+- **Removed** `frontend/src/pages/student/ExamInterface.svelte` — hapus `window_blur` violation handler biar sleep/background/blur HP gak dianggap pelanggaran
+
+### Fix Crash Preview Exam
+- **Fixed** `frontend/src/pages/admin/ExamPreview.svelte` — bungkus exam header dgn `{#if exam}` biar gak crash saat `exam` masih null pas render pertama
