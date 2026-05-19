@@ -111,6 +111,8 @@
     : exams;
   
   // Modal state
+  let selectedQuestions = [];
+  let selectAll = false;
   let showConfirmModal = false;
   let confirmCallback = null;
   let confirmMessage = '';
@@ -432,6 +434,39 @@
       console.error('Error adding question:', error);
       toast.error('Terjadi kesalahan saat menambahkan soal: ' + error.message);
     }
+  }
+
+  function toggleSelectAll() {
+    selectAll = !selectAll;
+    selectedQuestions = selectAll ? paginatedQuestions.map(q => q.id) : [];
+  }
+
+  function toggleQuestion(id) {
+    if (selectedQuestions.includes(id)) {
+      selectedQuestions = selectedQuestions.filter(q => q !== id);
+    } else {
+      selectedQuestions = [...selectedQuestions, id];
+    }
+    selectAll = selectedQuestions.length === paginatedQuestions.length && paginatedQuestions.length > 0;
+  }
+
+  async function bulkDeleteQuestions() {
+    if (selectedQuestions.length === 0) return;
+    const ids = selectedQuestions;
+    showConfirmation(`Apakah Anda yakin ingin menghapus ${ids.length} soal?`, async () => {
+      try {
+        await apiFetch('/api/soal/bulk-delete', {
+          method: 'POST',
+          body: { ids }
+        });
+        toast.success(`${ids.length} soal berhasil dihapus`);
+        selectedQuestions = [];
+        selectAll = false;
+        await fetchQuestions();
+      } catch (error) {
+        toast.error(error.message || 'Gagal menghapus soal');
+      }
+    });
   }
 
   async function deleteQuestion(questionId) {
@@ -823,6 +858,10 @@
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                   <tr>
+                    <th class="px-3 py-3 text-center w-10">
+                      <input type="checkbox" checked={selectAll} on:change={toggleSelectAll}
+                        class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer" />
+                    </th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-16">No</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Pertanyaan</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-32">Kelas</th>
@@ -835,7 +874,11 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
                   {#each paginatedQuestions as question, idx}
-                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                    <tr class="hover:bg-gray-50 transition-colors duration-150 {selectedQuestions.includes(question.id) ? 'bg-indigo-50' : ''}">
+                      <td class="px-3 py-2 text-center">
+                        <input type="checkbox" checked={selectedQuestions.includes(question.id)} on:change={() => toggleQuestion(question.id)}
+                          class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer" />
+                      </td>
                       <td class="px-3 py-2 text-sm text-gray-500 text-center">
                         {startIndex + idx + 1}
                       </td>
@@ -943,6 +986,27 @@
         </div>
       </div>
     </div>
+
+  <!-- Bulk Action Bar -->
+  {#if selectedQuestions.length > 0}
+  <div class="fixed bottom-4 sm:bottom-6 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 z-50 animate-scale-in">
+    <div class="bg-white rounded-2xl shadow-2xl border border-red-100 px-3 sm:px-5 py-3 flex flex-wrap items-center justify-center gap-2 sm:gap-4 max-w-full sm:max-w-max mx-auto">
+      <span class="text-sm font-medium text-gray-700 whitespace-nowrap">
+        <span class="text-red-600 font-bold">{selectedQuestions.length}</span> soal terpilih
+      </span>
+      <div class="hidden sm:block w-px h-6 bg-gray-200"></div>
+      <button on:click={() => { selectedQuestions = []; selectAll = false; }}
+        class="text-sm text-gray-500 hover:text-gray-700 transition-colors whitespace-nowrap">
+        Batal
+      </button>
+      <button on:click={bulkDeleteQuestions}
+        class="px-3 sm:px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg transition-all transform hover:scale-105 flex items-center gap-1.5 whitespace-nowrap">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        Hapus Terpilih
+      </button>
+    </div>
+  </div>
+  {/if}
 
   <!-- Question Modal (Add/Edit) -->
   {#if showQuestionModal}

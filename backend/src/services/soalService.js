@@ -260,6 +260,42 @@ class QuestionService {
     return currentImage;
   }
 
+  async bulkDelete(ids) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new BadRequestError('No question IDs provided');
+    }
+
+    for (const id of ids) {
+      const [soalData] = await db.query(
+        'SELECT gambar_soal, gambar_pilihan_a, gambar_pilihan_b, gambar_pilihan_c, gambar_pilihan_d, gambar_pilihan_e FROM soal WHERE id = ?',
+        [id]
+      );
+
+      if (soalData && soalData.length > 0) {
+        const images = [
+          soalData[0].gambar_soal,
+          soalData[0].gambar_pilihan_a,
+          soalData[0].gambar_pilihan_b,
+          soalData[0].gambar_pilihan_c,
+          soalData[0].gambar_pilihan_d,
+          soalData[0].gambar_pilihan_e
+        ];
+
+        for (const filename of images) {
+          if (filename) {
+            const imagePath = path.join(UPLOAD_DIR, filename);
+            try { await fs.unlink(imagePath); } catch (e) { /* ignore if not exists */ }
+          }
+        }
+      }
+    }
+
+    const placeholders = ids.map(() => '?').join(',');
+    const result = await db.query(`DELETE FROM soal WHERE id IN (${placeholders})`, ids);
+    logger.info({ soalIds: ids, affectedRows: result.affectedRows }, 'Bulk questions deleted');
+    return { message: `${result.affectedRows} soal berhasil dihapus`, affectedRows: result.affectedRows };
+  }
+
   async delete(id) {
     const [soalData] = await db.query(
       'SELECT gambar_soal, gambar_pilihan_a, gambar_pilihan_b, gambar_pilihan_c, gambar_pilihan_d, gambar_pilihan_e FROM soal WHERE id = ?',

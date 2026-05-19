@@ -121,6 +121,16 @@ const deleteImage = async (req, res, next) => {
   }
 };
 
+const bulkDelete = async (req, res, next) => {
+  try {
+    const { ids } = req.body;
+    const result = await questionService.bulkDelete(ids);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   upload: upload.fields(imageFields),
   getByExam,
@@ -131,6 +141,7 @@ module.exports = {
   getByBank,
   getAllBank,
   deleteImage,
+  bulkDelete,
   validations: {
     id: idValidation,
     examId: examIdValidation,

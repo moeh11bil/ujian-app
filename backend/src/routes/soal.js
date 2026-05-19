@@ -37,6 +37,7 @@ router.get('/', authenticateToken, authorizeRole(['admin', 'guru']), apiLimiter,
 router.post('/', authenticateToken, authorizeRole(['admin', 'guru']), questionController.upload, questionController.create);
 router.put('/:id', authenticateToken, authorizeRole(['admin', 'guru']), questionController.upload, questionController.update);
 router.delete('/:id', authenticateToken, authorizeRole(['admin', 'guru']), questionController.deleteQuestion);
+router.post('/bulk-delete', authenticateToken, authorizeRole(['admin', 'guru']), questionController.bulkDelete);
 router.get('/bank-soal/:kelasId', authenticateToken, authorizeRole(['admin', 'guru']), questionController.getByBank);
 router.get('/bank-soal', authenticateToken, authorizeRole(['admin', 'guru']), questionController.getAllBank);
 router.delete('/:id/images/:field', authenticateToken, authorizeRole(['admin', 'guru']), questionController.deleteImage);
