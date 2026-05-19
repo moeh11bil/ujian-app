@@ -73,6 +73,19 @@ const getAll = async (req, res, next) => {
   }
 };
 
+const getAllByRoles = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const search = req.query.search || '';
+    const roles = req.query.roles || 'admin,guru';
+    const result = await userService.getAllByRoles(roles, page, limit, search);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getAllStudents = async (req, res, next) => {
   try {
     const students = await userService.getAllStudents();
@@ -125,6 +138,7 @@ const bulkDelete = async (req, res, next) => {
 module.exports = {
   create: [createValidation, validate(createValidation), create],
   getAll,
+  getAllByRoles,
   getAllStudents,
   getById,
   update: [idValidation, updateValidation, validate(updateValidation), validate(idValidation), update],

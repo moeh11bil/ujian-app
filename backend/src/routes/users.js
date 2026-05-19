@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.post('/', authenticateToken, authorizeRole(['admin', 'guru']), apiLimiter, userController.create);
 router.get('/', authenticateToken, authorizeRole(['admin', 'guru']), apiLimiter, userController.getAll);
+router.get('/by-roles', authenticateToken, authorizeRole(['admin', 'guru']), apiLimiter, userController.getAllByRoles);
 router.get('/students', authenticateToken, authorizeRole(['admin', 'guru']), apiLimiter, userController.getAllStudents);
 router.get('/:id', authenticateToken, apiLimiter, userController.getById);
 router.put('/:id', authenticateToken, authorizeRole(['admin', 'guru']), userController.update);

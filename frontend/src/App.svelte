@@ -47,8 +47,11 @@
          <ProtectedRoute component={async () => (await import('./pages/admin/Results.svelte')).default} allowedRoles={['admin', 'guru']} />
        </Route>
        <Route path="/dashboard/classes">
-         <ProtectedRoute component={async () => (await import('./pages/admin/Classes.svelte')).default} allowedRoles={['admin', 'guru']} />
-       </Route>
+          <ProtectedRoute component={async () => (await import('./pages/admin/Classes.svelte')).default} allowedRoles={['admin', 'guru']} />
+        </Route>
+       <Route path="/dashboard/users">
+          <ProtectedRoute component={async () => (await import('./pages/admin/Users.svelte')).default} allowedRoles={['admin', 'guru']} />
+        </Route>
        <Route path="/dashboard/exams/:id/questions">
          <ProtectedRoute component={async () => (await import('./pages/admin/DashboardExamQuestions.svelte')).default} allowedRoles={['admin', 'guru']} />
        </Route>

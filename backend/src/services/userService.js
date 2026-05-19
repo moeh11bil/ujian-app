@@ -38,6 +38,35 @@ class UserService {
     return { data: users, pagination: { page, limit, total: countResult.total, totalPages: Math.ceil(countResult.total / limit) } };
   }
 
+  async getAllByRoles(roles, page = 1, limit = 50, search = '') {
+    const offset = (page - 1) * limit;
+    const roleList = Array.isArray(roles) ? roles : roles.split(',');
+    const placeholders = roleList.map(() => '?').join(',');
+    let query = `
+      SELECT u.id, u.nama, u.email, u.role, u.created_at
+      FROM users u
+      WHERE u.role IN (${placeholders})
+    `;
+    const countQuery = [`SELECT COUNT(*) as total FROM users WHERE role IN (${placeholders})`];
+    const params = [...roleList];
+
+    if (search) {
+      const searchPattern = `%${search}%`;
+      query += ` AND (u.nama LIKE ? OR u.email LIKE ?)`;
+      countQuery.push(` AND (nama LIKE ? OR email LIKE ?)`);
+      params.push(searchPattern, searchPattern);
+    }
+
+    query += ` ORDER BY u.created_at DESC LIMIT ? OFFSET ?`;
+    const countParams = [...params];
+    params.push(parseInt(limit), parseInt(offset));
+
+    const users = await db.query(query, params);
+    const [countResult] = await db.query(countQuery.join(''), countParams);
+
+    return { data: users, pagination: { page, limit, total: countResult.total, totalPages: Math.ceil(countResult.total / limit) } };
+  }
+
   async getAllStudents() {
     const students = await db.query(`
       SELECT u.id, u.nama, u.email, u.nisn, u.no_peserta, u.role, u.created_at, u.kelas_id, k.nama_kelas
