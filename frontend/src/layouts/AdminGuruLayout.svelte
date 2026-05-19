@@ -95,7 +95,7 @@
   });
 </script>
 
-<div class="grid h-screen w-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden admin-grid" style="grid-template-columns: {!isStudentRoute && !sidebarCollapsed ? '288px' : isStudentRoute ? '0px' : '80px'} 1fr;">
+<div class="grid h-screen w-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden admin-grid {sidebarOpen ? 'sidebar-open' : ''}" style="grid-template-columns: {!isStudentRoute && !sidebarCollapsed ? '288px' : isStudentRoute ? '0px' : '80px'} 1fr;">
    <!-- Sidebar Overlay (Mobile) -->
    {#if sidebarOpen && !isStudentRoute}
      <div class="fixed inset-0 bg-black/50 z-20 md:hidden" on:click={toggleSidebar}></div>
@@ -512,7 +512,7 @@
       grid-template-columns: 0px 1fr !important;
     }
 
-    .admin-grid #sidebar {
+    .sidebar-open #sidebar {
       position: fixed !important;
       top: 0 !important;
       bottom: 0 !important;
