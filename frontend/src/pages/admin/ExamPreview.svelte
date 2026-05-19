@@ -1,43 +1,37 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { navigate } from 'svelte-routing';
-  import { apiFetch } from '$lib/api';
+  import { apiFetch, BASE_URL } from '$lib/api';
   import toast from '../../lib/toast.js';
   import ToastContainer from '../../components/ToastContainer.svelte';
 
-  // Get the exam ID from the URL
   let examId = null;
   let paketId = null;
   if (window.location.pathname) {
     const pathParts = window.location.pathname.split('/');
-    // URL pattern: /dashboard/exams/:id/preview
-    // Find the index of 'exams' and get the next part
     const examsIndex = pathParts.indexOf('exams');
     if (examsIndex !== -1 && examsIndex < pathParts.length - 1) {
       examId = pathParts[examsIndex + 1];
     }
   }
   
-  // Get paket_id from query string if present
   if (window.location.search) {
     const urlParams = new URLSearchParams(window.location.search);
     paketId = urlParams.get('paket_id');
-    if (paketId) {
-    }
   }
 
   let exam = null;
   let questions = [];
   let currentQuestionIndex = 0;
+  let pageState = 'loading'; // 'loading' | 'error' | 'ready'
   
-  // Image zoom modal state
   let zoomedImage = null;
   let zoomedImageAlt = '';
 
+  $: uploadBase = BASE_URL.replace(/\/api\/?$/, '') || '';
+
   onMount(async () => {
     const token = localStorage.getItem('token');
-    
-    // Add admin-layout class
     document.body.classList.add('admin-layout');
     
     if (!token) {
@@ -54,10 +48,10 @@
 
     await fetchExamDetails();
     await fetchQuestions();
+    if (pageState === 'loading') pageState = 'ready';
   });
 
   onDestroy(() => {
-    // Remove admin-layout class
     document.body.classList.remove('admin-layout');
   });
 
@@ -65,31 +59,23 @@
     try {
       const response = await apiFetch(`/api/ujian/${examId}`);
       exam = response;
-    } catch (error) {
-      console.error('Error fetching exam details:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack
-      });
-      toast.error('Terjadi kesalahan saat memuat ujian: ' + error.message);
-      navigate('/dashboard/exams');
+    } catch (err) {
+      pageState = 'error';
+      console.error('Error fetching exam details:', err);
     }
   }
 
   async function fetchQuestions() {
     try {
       if (paketId) {
-        // Fetch questions from specific package
         const paketData = await apiFetch(`/api/paket-soal/${paketId}`);
         questions = paketData.soal || [];
       } else {
-        // Fetch all questions (default behavior)
         questions = await apiFetch(`/api/soal/ujian/${examId}`);
       }
-    } catch (error) {
-      console.error('Error fetching questions:', error);
-      toast.error('Terjadi kesalahan saat memuat soal: ' + error.message);
-      navigate('/dashboard/exams');
+    } catch (err) {
+      pageState = 'error';
+      console.error('Error fetching questions:', err);
     }
   }
 
@@ -193,7 +179,22 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+  <div class="flex justify-center items-center py-20" class:hidden={pageState !== 'loading'}>
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+    <span class="ml-4 text-lg text-gray-600">Memuat soal...</span>
+  </div>
+  <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center" class:hidden={pageState !== 'error'}>
+    <svg class="w-12 h-12 text-red-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+    </svg>
+    <p class="text-red-700 font-medium mb-2">Terjadi Kesalahan</p>
+    <p class="text-red-600 text-sm mb-2">Gagal memuat data ujian. Silakan coba lagi.</p>
+    <button on:click={() => { pageState = 'loading'; fetchExamDetails(); fetchQuestions().finally(() => { if (pageState === 'loading') pageState = 'ready'; }); }} class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+      Coba Lagi
+    </button>
+  </div>
+  <div class:hidden={pageState !== 'ready'}>
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- Questions navigation panel -->
         <div class="lg:col-span-1">
           <div class="card p-5">
@@ -254,9 +255,9 @@
                 {#if questions[currentQuestionIndex]?.gambar_soal}
                   <div class="mb-4">
                     <p class="text-sm text-gray-600 mb-2">Gambar Soal:</p>
-                    <div class="inline-block relative group cursor-pointer" on:click={() => openImageZoom(`http://localhost:3000/uploads/soal/${questions[currentQuestionIndex].gambar_soal}`, 'Gambar Soal')}>
+                    <div class="inline-block relative group cursor-pointer" on:click={() => openImageZoom(`{uploadBase}/uploads/soal/${questions[currentQuestionIndex].gambar_soal}`, 'Gambar Soal')}>
                       <img 
-                        src="http://localhost:3000/uploads/soal/{questions[currentQuestionIndex].gambar_soal}" 
+                        src="{uploadBase}/uploads/soal/{questions[currentQuestionIndex].gambar_soal}" 
                         alt="Gambar Soal" 
                         class="max-w-48 h-auto rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
                         on:error={(e) => {
@@ -302,10 +303,10 @@
                     {#if questions[currentQuestionIndex]?.gambar_pilihan_a}
                       <div 
                         class="ml-4 relative group cursor-pointer" 
-                        on:click={() => openImageZoom(`http://localhost:3000/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_a}`, 'Gambar Pilihan A')}
+                        on:click={() => openImageZoom(`{uploadBase}/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_a}`, 'Gambar Pilihan A')}
                       >
                         <img 
-                          src="http://localhost:3000/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_a}" 
+                          src="{uploadBase}/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_a}" 
                           alt="Gambar Pilihan A" 
                           class="w-16 h-16 object-cover rounded border-2 border-gray-200 hover:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
                           on:error={(e) => {
@@ -345,10 +346,10 @@
                     {#if questions[currentQuestionIndex]?.gambar_pilihan_b}
                       <div 
                         class="ml-4 relative group cursor-pointer" 
-                        on:click={() => openImageZoom(`http://localhost:3000/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_b}`, 'Gambar Pilihan B')}
+                        on:click={() => openImageZoom(`{uploadBase}/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_b}`, 'Gambar Pilihan B')}
                       >
                         <img 
-                          src="http://localhost:3000/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_b}" 
+                          src="{uploadBase}/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_b}" 
                           alt="Gambar Pilihan B" 
                           class="w-16 h-16 object-cover rounded border-2 border-gray-200 hover:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
                           on:error={(e) => {
@@ -388,10 +389,10 @@
                     {#if questions[currentQuestionIndex]?.gambar_pilihan_c}
                       <div 
                         class="ml-4 relative group cursor-pointer" 
-                        on:click={() => openImageZoom(`http://localhost:3000/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_c}`, 'Gambar Pilihan C')}
+                        on:click={() => openImageZoom(`{uploadBase}/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_c}`, 'Gambar Pilihan C')}
                       >
                         <img 
-                          src="http://localhost:3000/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_c}" 
+                          src="{uploadBase}/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_c}" 
                           alt="Gambar Pilihan C" 
                           class="w-16 h-16 object-cover rounded border-2 border-gray-200 hover:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
                           on:error={(e) => {
@@ -431,10 +432,10 @@
                     {#if questions[currentQuestionIndex]?.gambar_pilihan_d}
                       <div 
                         class="ml-4 relative group cursor-pointer" 
-                        on:click={() => openImageZoom(`http://localhost:3000/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_d}`, 'Gambar Pilihan D')}
+                        on:click={() => openImageZoom(`{uploadBase}/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_d}`, 'Gambar Pilihan D')}
                       >
                         <img 
-                          src="http://localhost:3000/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_d}" 
+                          src="{uploadBase}/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_d}" 
                           alt="Gambar Pilihan D" 
                           class="w-16 h-16 object-cover rounded border-2 border-gray-200 hover:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
                           on:error={(e) => {
@@ -475,10 +476,10 @@
                       {#if questions[currentQuestionIndex]?.gambar_pilihan_e}
                         <div 
                           class="ml-4 relative group cursor-pointer" 
-                          on:click={() => openImageZoom(`http://localhost:3000/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_e}`, 'Gambar Pilihan E')}
+                          on:click={() => openImageZoom(`{uploadBase}/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_e}`, 'Gambar Pilihan E')}
                         >
                           <img 
-                            src="http://localhost:3000/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_e}" 
+                            src="{uploadBase}/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_e}" 
                             alt="Gambar Pilihan E" 
                             class="w-16 h-16 object-cover rounded border-2 border-gray-200 hover:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
                             on:error={(e) => {
@@ -568,10 +569,10 @@
                       {#if questions[currentQuestionIndex]?.gambar_pilihan_a}
                         <div
                           class="ml-4 relative group cursor-pointer"
-                          on:click={() => openImageZoom(`http://localhost:3000/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_a}`, 'Gambar Pilihan A')}
+                          on:click={() => openImageZoom(`{uploadBase}/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_a}`, 'Gambar Pilihan A')}
                         >
                           <img
-                            src="http://localhost:3000/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_a}"
+                            src="{uploadBase}/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_a}"
                             alt="Gambar Pilihan A"
                             class="w-16 h-16 object-cover rounded border-2 border-gray-200 hover:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
                             on:error={(e) => {
@@ -611,10 +612,10 @@
                       {#if questions[currentQuestionIndex]?.gambar_pilihan_b}
                         <div
                           class="ml-4 relative group cursor-pointer"
-                          on:click={() => openImageZoom(`http://localhost:3000/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_b}`, 'Gambar Pilihan B')}
+                          on:click={() => openImageZoom(`{uploadBase}/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_b}`, 'Gambar Pilihan B')}
                         >
                           <img
-                            src="http://localhost:3000/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_b}"
+                            src="{uploadBase}/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_b}"
                             alt="Gambar Pilihan B"
                             class="w-16 h-16 object-cover rounded border-2 border-gray-200 hover:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
                             on:error={(e) => {
@@ -654,10 +655,10 @@
                       {#if questions[currentQuestionIndex]?.gambar_pilihan_c}
                         <div
                           class="ml-4 relative group cursor-pointer"
-                          on:click={() => openImageZoom(`http://localhost:3000/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_c}`, 'Gambar Pilihan C')}
+                          on:click={() => openImageZoom(`{uploadBase}/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_c}`, 'Gambar Pilihan C')}
                         >
                           <img
-                            src="http://localhost:3000/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_c}"
+                            src="{uploadBase}/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_c}"
                             alt="Gambar Pilihan C"
                             class="w-16 h-16 object-cover rounded border-2 border-gray-200 hover:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
                             on:error={(e) => {
@@ -697,10 +698,10 @@
                       {#if questions[currentQuestionIndex]?.gambar_pilihan_d}
                         <div
                           class="ml-4 relative group cursor-pointer"
-                          on:click={() => openImageZoom(`http://localhost:3000/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_d}`, 'Gambar Pilihan D')}
+                          on:click={() => openImageZoom(`{uploadBase}/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_d}`, 'Gambar Pilihan D')}
                         >
                           <img
-                            src="http://localhost:3000/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_d}"
+                            src="{uploadBase}/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_d}"
                             alt="Gambar Pilihan D"
                             class="w-16 h-16 object-cover rounded border-2 border-gray-200 hover:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
                             on:error={(e) => {
@@ -740,10 +741,10 @@
                       {#if questions[currentQuestionIndex]?.gambar_pilihan_e}
                         <div
                           class="ml-4 relative group cursor-pointer"
-                          on:click={() => openImageZoom(`http://localhost:3000/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_e}`, 'Gambar Pilihan E')}
+                          on:click={() => openImageZoom(`{uploadBase}/uploads/soal/${questions[currentQuestionIndex].gambar_pilihan_e}`, 'Gambar Pilihan E')}
                         >
                           <img
-                            src="http://localhost:3000/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_e}"
+                            src="{uploadBase}/uploads/soal/{questions[currentQuestionIndex].gambar_pilihan_e}"
                             alt="Gambar Pilihan E"
                             class="w-16 h-16 object-cover rounded border-2 border-gray-200 hover:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
                             on:error={(e) => {
@@ -798,7 +799,7 @@
         </div>
       </div>
     </div>
-
+    </div>
 
   <!-- Image Zoom Modal -->
   {#if zoomedImage}

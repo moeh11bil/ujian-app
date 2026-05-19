@@ -2,7 +2,7 @@ import { authActions } from '../stores/authStore';
 import toast from './toast';
 import type { ApiSuccessResponse, LoginResponse } from '../types/api';
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+export const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Track active requests for aborting
 const activeRequests = new Map<string, AbortController>();

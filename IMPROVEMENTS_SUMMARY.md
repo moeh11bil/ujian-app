@@ -885,3 +885,10 @@ Would you like me to implement any specific remaining items?
 - **Modified** `frontend/src/pages/admin/UnifiedQuestionBank.svelte` — max-w responsive untuk teks soal
 - **Fixed** `backend/src/routes/update.js` — ganti `git remote update` jadi `git fetch origin master --depth=1` biar gak hang saat banyak commit
 - **Modified** `frontend/src/pages/admin/Update.svelte` — progress bar + step list + collapsible terminal log; fix remote url overflow
+
+### Bulk Delete Soal Bank Soal
+- **Added** `backend/src/services/soalService.js` — `bulkDelete(ids)` method hapus banyak soal + gambar terkait
+- **Added** `backend/src/controllers/soalController.js` — `bulkDelete` endpoint handler
+- **Added** `backend/src/routes/soal.js` — `POST /bulk-delete` route
+- **Modified** `frontend/src/pages/admin/UnifiedQuestionBank.svelte` — checkbox kolom tabel, pilih semua, highlight row, fixed bottom action bar, konfirmasi modal + hapus massal
+- **Fixed** `backend/scripts/update.sh` — ganti `git pull` jadi `git fetch origin master && git reset --hard origin/master` biar gak gagal divergent branches

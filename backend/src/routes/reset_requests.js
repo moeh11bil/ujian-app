@@ -45,7 +45,7 @@ router.post('/', authenticateToken, authorizeRole(['siswa']), async (req, res) =
     // Check exam schedule
     const [ujian] = await db.query(
       'SELECT waktu_mulai, waktu_selesai FROM ujian WHERE id = ?',
-      [ujianId]
+      [examId]
     );
 
     if (ujian && (ujian.waktu_mulai || ujian.waktu_selesai)) {
@@ -63,7 +63,7 @@ router.post('/', authenticateToken, authorizeRole(['siswa']), async (req, res) =
     // Create the reset request
     const result = await db.query(
       'INSERT INTO reset_requests (user_id, ujian_id) VALUES (?, ?)',
-      [user_id, ujianId]
+      [user_id, examId]
     );
 
     res.status(201).json({

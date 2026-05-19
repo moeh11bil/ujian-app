@@ -418,4 +418,25 @@ router.delete('/ujian/:ujianId/user/:userId', authenticateToken, authorizeRole([
   }
 });
 
+// Reset all exam attempts for a specific student (admin/guru only)
+router.delete('/reset-student/:userId', authenticateToken, authorizeRole(['admin', 'guru']), async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const userExists = await db.query('SELECT id FROM users WHERE id = ?', [userId]);
+    if (!userExists.length) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const result = await db.query('DELETE FROM hasil WHERE user_id = ?', [userId]);
+
+    res.json({
+      message: 'Status ujian siswa berhasil di-reset',
+      deletedRows: result.affectedRows
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal me-reset status ujian siswa', error: error.message });
+  }
+});
+
 module.exports = router;
