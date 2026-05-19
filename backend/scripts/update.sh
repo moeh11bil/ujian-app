@@ -35,17 +35,19 @@ cd "$BACKEND_DIR" && npm install >> "$LOG_FILE" 2>&1
 log "Install frontend dependencies..."
 cd "$FRONTEND_DIR" && npm install >> "$LOG_FILE" 2>&1
 
-log "Jalankan migrasi database..."
-cd "$BACKEND_DIR" && node update-schema.js >> "$LOG_FILE" 2>&1
-
 log "Build frontend..."
 cd "$FRONTEND_DIR" && npm run build >> "$LOG_FILE" 2>&1
 
 log "Update selesai! Restart server..."
 sleep 1
 
-kill $(lsof -ti:3000) 2>/dev/null
-sleep 1
+# Baca PORT dari .env
+SERVER_PORT=$(grep '^PORT=' "$BACKEND_DIR/.env" | cut -d= -f2)
+SERVER_PORT=${SERVER_PORT:-3000}
+
+# Kill server lama berdasarkan port
+kill $(lsof -ti:$SERVER_PORT) 2>/dev/null
+sleep 2
 cd "$BACKEND_DIR" && nohup node server.js > server_output.log 2>&1 &
 
 log "Server berhasil direstart"
