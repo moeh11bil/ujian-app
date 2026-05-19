@@ -32,6 +32,7 @@
   }
 
   function handleNavigate(to: string) {
+    sidebarOpen = false;
     navigate(to);
     updatePath(to);
   }
