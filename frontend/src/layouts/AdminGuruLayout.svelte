@@ -118,7 +118,6 @@
             </div>
             <div>
               <h1 class="text-xl font-bold text-white tracking-tight">EduPanel</h1>
-              <p class="text-[10px] text-slate-500 mt-0.5">Learning Management System</p>
             </div>
           </div>
         {:else}
@@ -130,17 +129,6 @@
             </div>
           </div>
         {/if}
-        
-        <button 
-          id="menu-button-mobile" 
-          on:click={toggleSidebar} 
-          class="md:hidden text-slate-400 hover:text-white transition-colors duration-150"
-          aria-label="Toggle sidebar"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
       </div>
     </div>
 
