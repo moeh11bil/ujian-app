@@ -167,6 +167,7 @@
               {#if !sidebarCollapsed}<span class="text-sm">Dashboard</span>{/if}
             </a>
           </li>
+          {#if $user?.role === 'admin'}
           <li>
             <a 
               href="javascript:void(0)"
@@ -191,6 +192,7 @@
               {#if !sidebarCollapsed}<span class="text-sm">Kelas</span>{/if}
             </a>
           </li>
+          {/if}
         </ul>
       </div>
 
@@ -227,6 +229,7 @@
               {#if !sidebarCollapsed}<span class="text-sm">Ujian</span>{/if}
             </a>
           </li>
+          {#if $user?.role === 'admin'}
           <li>
             <a 
               href="javascript:void(0)"
@@ -240,6 +243,7 @@
               {#if !sidebarCollapsed}<span class="text-sm">Pengguna</span>{/if}
             </a>
           </li>
+          {/if}
         </ul>
       </div>
 
@@ -314,6 +318,7 @@
           </li>
         </ul>
       </div>
+      {#if $user?.role === 'admin'}
       <!-- Group: Pengaturan -->
       <div class="space-y-2">
         {#if !sidebarCollapsed}
@@ -356,6 +361,7 @@
           </li>
         </ul>
       </div>
+      {/if}
     </nav>
 
     <!-- Footer / Version & Logout -->
