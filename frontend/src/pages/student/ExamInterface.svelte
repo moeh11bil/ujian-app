@@ -872,7 +872,7 @@
 
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- Question Numbers Panel -->
-        <div class="lg:col-span-1">
+        <div class="lg:col-span-1 max-lg:hidden">
           <details class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden lg:block">
             <summary class="p-4 font-bold text-gray-800 cursor-pointer flex items-center justify-between bg-white hover:bg-gray-50 transition-colors sticky top-24 z-10">
               <div class="flex items-center space-x-2">
