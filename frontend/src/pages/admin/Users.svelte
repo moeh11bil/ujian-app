@@ -178,10 +178,6 @@
     });
   }
 
-  function getRoleBadge(role) {
-    if (role === 'admin') return { label: 'Admin', class: 'bg-purple-100 text-purple-700' };
-    return { label: 'Guru', class: 'bg-blue-100 text-blue-700' };
-  }
 </script>
 
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -300,8 +296,7 @@
                   </td>
                   <td class="px-6 py-4 text-sm text-gray-600">{user.email || '-'}</td>
                   <td class="px-6 py-4">
-                    {@const badge = getRoleBadge(user.role)}
-                    <span class="px-3 py-1 text-xs font-semibold rounded-full {badge.class}">{badge.label}</span>
+                    <span class="px-3 py-1 text-xs font-semibold rounded-full {user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">{user.role === 'admin' ? 'Admin' : 'Guru'}</span>
                   </td>
                   <td class="px-6 py-4 text-sm text-gray-500">
                     {user.created_at ? new Date(user.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
