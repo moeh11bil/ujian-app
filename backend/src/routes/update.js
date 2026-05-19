@@ -76,9 +76,8 @@ router.get('/info', authenticateToken, authorizeRole(['admin']), async (req, res
     if (hasRemote) {
       try {
         await execGit(ROOT_DIR, 'remote update 2>&1');
-        const status = await execGit(ROOT_DIR, 'status -sb');
-        const match = status.match(/behind\s+(\d+)/);
-        behind = match ? parseInt(match[1]) : 0;
+        const count = await execGit(ROOT_DIR, 'rev-list --count HEAD..origin/master');
+        behind = parseInt(count) || 0;
       } catch (e) {
         behind = -1;
       }
