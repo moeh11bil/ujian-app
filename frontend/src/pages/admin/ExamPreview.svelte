@@ -168,6 +168,7 @@
       {/if}
 
       <!-- Exam header -->
+      {#if exam}
       <div class="card mb-6 p-5 flex flex-col sm:flex-row justify-between items-center">
         <h1 class="text-xl md:text-2xl font-bold text-gray-900 mb-3 sm:mb-0">{exam.judul}</h1>
         <div class="flex items-center bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-lg">
@@ -178,6 +179,7 @@
           <span class="text-lg font-bold">Mode Preview</span>
         </div>
       </div>
+      {/if}
 
   <div class="flex justify-center items-center py-20" class:hidden={pageState !== 'loading'}>
     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
