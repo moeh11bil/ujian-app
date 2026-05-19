@@ -102,10 +102,10 @@
    {/if}
 
    {#if !isStudentRoute}
-   <aside 
-     id="sidebar" 
-     class="relative h-full w-full bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#0f172a] text-slate-300 shadow-2xl flex flex-col z-30 transform {sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:static md:translate-x-0 transition-all duration-300 ease-in-out"
-   >
+    <aside 
+      id="sidebar" 
+      class="fixed md:relative h-full w-72 md:w-full bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#0f172a] text-slate-300 shadow-2xl flex flex-col z-30 transform {sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-all duration-300 ease-in-out"
+    >
     <!-- Header -->
     <div class="px-4 pt-8 pb-6 mb-4">
       <div class="flex items-center justify-between">
