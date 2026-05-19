@@ -31,20 +31,19 @@ git pull origin master >> "$LOG_FILE" 2>&1
 
 log "Install backend dependencies..."
 rm -f "$BACKEND_DIR/node_modules/.package-lock.json"
-cd "$BACKEND_DIR" && npm install --prefer-offline --no-audit --no-fund >> "$LOG_FILE" 2>&1 || true
+cd "$BACKEND_DIR" && timeout 120 npm install --prefer-offline --no-audit --no-fund >> "$LOG_FILE" 2>&1 || true
 NPM_EXIT=$?
 if [ $NPM_EXIT -ne 0 ]; then
   log "npm install gagal (exit code $NPM_EXIT), coba dengan cache clean..."
   npm cache clean --force >> "$LOG_FILE" 2>&1
-  cd "$BACKEND_DIR" && npm install --no-audit --no-fund >> "$LOG_FILE" 2>&1 || true
+  cd "$BACKEND_DIR" && timeout 120 npm install --no-audit --no-fund >> "$LOG_FILE" 2>&1 || true
 fi
 
 log "Install frontend dependencies..."
-rm -f "$FRONTEND_DIR/node_modules/.package-lock.json"
-cd "$FRONTEND_DIR" && npm install --prefer-offline --no-audit --no-fund >> "$LOG_FILE" 2>&1
+cd "$FRONTEND_DIR" && timeout 120 npm install --prefer-offline --no-audit --no-fund >> "$LOG_FILE" 2>&1 || true
 
 log "Build frontend..."
-cd "$FRONTEND_DIR" && npm run build >> "$LOG_FILE" 2>&1
+cd "$FRONTEND_DIR" && timeout 120 npm run build >> "$LOG_FILE" 2>&1 || true
 
 log "Update selesai! Restart server..."
 sleep 1
