@@ -892,3 +892,9 @@ Would you like me to implement any specific remaining items?
 - **Added** `backend/src/routes/soal.js` — `POST /bulk-delete` route
 - **Modified** `frontend/src/pages/admin/UnifiedQuestionBank.svelte` — checkbox kolom tabel, pilih semua, highlight row, fixed bottom action bar, konfirmasi modal + hapus massal
 - **Fixed** `backend/scripts/update.sh` — ganti `git pull` jadi `git fetch origin master && git reset --hard origin/master` biar gak gagal divergent branches
+
+### Fix Preview Exam & Reset Ujian Siswa
+- **Fixed** `frontend/src/pages/admin/ExamPreview.svelte` — ganti error handling biar gak navigasi away; tambah loading spinner + error state + tombol "Coba Lagi"; fix hardcoded `localhost:3000` jadi dynamic base url
+- **Fixed** `backend/src/routes/reset_requests.js` — typo `ujianId` → `examId` (variabel undefined) yang bikin 500 error saat siswa minta reset
+- **Added** `backend/src/routes/hasil.js` — route `DELETE /reset-student/:userId` untuk admin reset status ujian siswa dari halaman Students
+- **Exported** `frontend/src/lib/api.ts` — export `BASE_URL` biar bisa dipakai di komponen lain
