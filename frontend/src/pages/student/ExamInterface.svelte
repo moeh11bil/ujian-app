@@ -61,8 +61,7 @@
   let mounted = true;
 
   // Event listener refs for cleanup
-  let visibilityHandler, fullscreenHandler, beforeunloadHandler, blurHandler, focusHandler, keydownHandler;
-  let blurTimeout;
+  let visibilityHandler, fullscreenHandler, beforeunloadHandler, keydownHandler;
 
   // Load saved progress from localStorage
   function loadProgress() {
@@ -226,24 +225,6 @@
       };
       window.addEventListener('beforeunload', beforeunloadHandler);
 
-      // Detect window focus loss with debounce (cancel if focus returns within 500ms)
-      blurHandler = () => {
-        clearTimeout(blurTimeout);
-        blurTimeout = setTimeout(() => {
-          handleViolation('window_blur');
-        }, 500);
-      };
-      window.addEventListener('blur', blurHandler);
-
-      // Cancel pending blur violation if focus returns quickly
-      focusHandler = () => {
-        if (blurTimeout) {
-          clearTimeout(blurTimeout);
-          blurTimeout = null;
-        }
-      };
-      window.addEventListener('focus', focusHandler);
-
       // Detect Windows key / Command key press directly
       keydownHandler = (e) => {
         if (e.key === 'Meta') {
@@ -263,13 +244,10 @@
     if (timerInterval) clearInterval(timerInterval);
     if (heartbeatInterval) clearInterval(heartbeatInterval);
     if (lockPollInterval) clearInterval(lockPollInterval);
-    if (blurTimeout) clearTimeout(blurTimeout);
 
     if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
     if (fullscreenHandler) document.removeEventListener('fullscreenchange', fullscreenHandler);
     if (beforeunloadHandler) window.removeEventListener('beforeunload', beforeunloadHandler);
-    if (blurHandler) window.removeEventListener('blur', blurHandler);
-    if (focusHandler) window.removeEventListener('focus', focusHandler);
     if (keydownHandler) document.removeEventListener('keydown', keydownHandler);
   });
 
@@ -323,7 +301,6 @@
     const messages = {
       'tab_switch': 'Anda telah meninggalkan halaman ujian (berpindah tab/jendela).',
       'fullscreen_exit': 'Anda telah keluar dari mode layar penuh.',
-      'window_blur': 'Anda meninggalkan layar ujian (menekan tombol Windows, Alt+Tab, atau beralih aplikasi).',
       'windows_key': 'Anda menekan tombol Windows. Harap tetap fokus pada ujian.'
     };
 
