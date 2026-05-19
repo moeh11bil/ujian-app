@@ -110,24 +110,9 @@
     <div class="px-4 pt-8 pb-6 mb-4">
       <div class="flex items-center justify-between">
         {#if !sidebarCollapsed}
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <div>
-              <h1 class="text-xl font-bold text-white tracking-tight">EduPanel</h1>
-            </div>
-          </div>
+          <h1 class="text-xl font-bold text-white tracking-tight">EduPanel</h1>
         {:else}
-          <div class="mx-auto">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-          </div>
+          <span class="mx-auto text-lg font-bold text-white">EP</span>
         {/if}
       </div>
     </div>
@@ -498,6 +483,10 @@
   @media (max-width: 767px) {
     .admin-grid {
       grid-template-columns: 0px 1fr !important;
+    }
+
+    .admin-grid #sidebar {
+      overflow: hidden !important;
     }
 
     .sidebar-open #sidebar {
