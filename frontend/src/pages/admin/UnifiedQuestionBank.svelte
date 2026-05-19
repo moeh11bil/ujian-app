@@ -1,6 +1,6 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
-  import { fetchWithAuth, apiFetch } from '$lib/api';
+  import { fetchWithAuth, apiFetch, BASE_URL } from '$lib/api';
   import Modal from '../../components/Modal.svelte';
   import ToastContainer from '../../components/ToastContainer.svelte';
   import toast from '../../lib/toast.js';
@@ -44,7 +44,8 @@
    }
 
    // Reactive statements to reset page when filters change
-   $: filterByClass, handleFilterOrPageChange();
+   $: uploadBase = BASE_URL.replace(/\/api\/?$/, '') || '';
+  $: filterByClass, handleFilterOrPageChange();
    $: filterByExam, handleFilterOrPageChange();
    $: searchQuery, handleFilterOrPageChange();
    $: entriesPerPage, handleFilterOrPageChange();
@@ -210,7 +211,7 @@
       const token = localStorage.getItem('token');
       const tokenString = token.startsWith('Bearer ') ? token.substring(7) : token;
       
-      const response = await fetch(`http://localhost:3000${url}`, {
+      const response = await fetch(`${uploadBase}${url}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${tokenString}`
@@ -572,12 +573,12 @@
     
     // Set preview images for existing images
     previewImages = {
-      gambar_soal: question.gambar_soal ? `http://localhost:3000/uploads/soal/${question.gambar_soal}` : '',
-      gambar_pilihan_a: question.gambar_pilihan_a ? `http://localhost:3000/uploads/soal/${question.gambar_pilihan_a}` : '',
-      gambar_pilihan_b: question.gambar_pilihan_b ? `http://localhost:3000/uploads/soal/${question.gambar_pilihan_b}` : '',
-      gambar_pilihan_c: question.gambar_pilihan_c ? `http://localhost:3000/uploads/soal/${question.gambar_pilihan_c}` : '',
-      gambar_pilihan_d: question.gambar_pilihan_d ? `http://localhost:3000/uploads/soal/${question.gambar_pilihan_d}` : '',
-      gambar_pilihan_e: question.gambar_pilihan_e ? `http://localhost:3000/uploads/soal/${question.gambar_pilihan_e}` : ''
+      gambar_soal: question.gambar_soal ? `${uploadBase}/uploads/soal/${question.gambar_soal}` : '',
+      gambar_pilihan_a: question.gambar_pilihan_a ? `${uploadBase}/uploads/soal/${question.gambar_pilihan_a}` : '',
+      gambar_pilihan_b: question.gambar_pilihan_b ? `${uploadBase}/uploads/soal/${question.gambar_pilihan_b}` : '',
+      gambar_pilihan_c: question.gambar_pilihan_c ? `${uploadBase}/uploads/soal/${question.gambar_pilihan_c}` : '',
+      gambar_pilihan_d: question.gambar_pilihan_d ? `${uploadBase}/uploads/soal/${question.gambar_pilihan_d}` : '',
+      gambar_pilihan_e: question.gambar_pilihan_e ? `${uploadBase}/uploads/soal/${question.gambar_pilihan_e}` : ''
     };
     
     // Reset image files

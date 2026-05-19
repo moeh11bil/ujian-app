@@ -1,6 +1,6 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
-  import { apiFetch } from '$lib/api';
+  import { apiFetch, BASE_URL } from '$lib/api';
   import toast from '../../lib/toast';
   import { navigate } from 'svelte-routing';
 
@@ -30,6 +30,7 @@
   let saving = false;
 
   // Reactive current question
+  $: uploadBase = BASE_URL.replace(/\/api\/?$/, '') || '';
   $: currentQuestion = questions.find(q => q.soal_id === currentSoalId) || null;
   $: currentIdx = questions.findIndex(q => q.soal_id === currentSoalId);
 
@@ -414,7 +415,7 @@
                 {#if currentQuestion.gambar_soal}
                   <div class="mb-6">
                     <img
-                      src="http://localhost:3000/api/soal/images/{currentQuestion.gambar_soal}"
+                      src="{uploadBase}/api/soal/images/{currentQuestion.gambar_soal}"
                       alt="Soal illustration"
                       class="max-w-full h-auto max-h-64 rounded-lg border border-gray-200"
                     />

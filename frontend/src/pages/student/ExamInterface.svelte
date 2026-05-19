@@ -3,7 +3,7 @@
   import { writable } from 'svelte/store';
   import { navigate } from 'svelte-routing';
   import { navigateTo } from '../../stores/routeStore.js';
-  import { apiFetch } from '$lib/api';
+  import { apiFetch, BASE_URL } from '$lib/api';
   import toast from '../../lib/toast.js';
 
   export let id; // Prop dari svelte-routing
@@ -535,6 +535,7 @@
   }
 
   // Reactive wrapper for timer display
+  $: uploadBase = BASE_URL.replace(/\/api\/?$/, '') || '';
   $: currentTime = $timeLeft;
   
   // Reactive calculation for progress
@@ -967,7 +968,7 @@
                 {#if questions[currentQuestionIndex].gambar_soal}
                   <div class="px-6 pb-4">
                     <img
-                      src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/soal/images/${questions[currentQuestionIndex].gambar_soal}`}
+                      src="{uploadBase}/api/soal/images/{questions[currentQuestionIndex].gambar_soal}"
                       alt="Soal illustration"
                       loading="lazy"
                       class="max-w-full h-auto max-h-64 rounded-xl border border-gray-200 shadow-sm"
@@ -1007,7 +1008,7 @@
                             </span>
                             {#if questions[currentQuestionIndex]['gambar_pilihan_' + option.toLowerCase()]}
                               <img 
-                                src="http://localhost:3000/api/soal/images/{questions[currentQuestionIndex]['gambar_pilihan_' + option.toLowerCase()]}"
+                                src="{uploadBase}/api/soal/images/{questions[currentQuestionIndex]['gambar_pilihan_' + option.toLowerCase()]}"
                                 alt="Option {option}"
                                 loading="lazy"
                                 class="ml-4 max-w-32 h-auto rounded-lg border"
