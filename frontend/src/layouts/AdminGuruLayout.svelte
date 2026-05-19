@@ -95,7 +95,7 @@
   });
 </script>
 
-<div class="grid h-screen w-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden" style="grid-template-columns: {!isStudentRoute && !sidebarCollapsed ? '288px' : isStudentRoute ? '0px' : '80px'} 1fr;">
+<div class="grid h-screen w-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden admin-grid" style="grid-template-columns: {!isStudentRoute && !sidebarCollapsed ? '288px' : isStudentRoute ? '0px' : '80px'} 1fr;">
    <!-- Sidebar Overlay (Mobile) -->
    {#if sidebarOpen && !isStudentRoute}
      <div class="fixed inset-0 bg-black/50 z-20 md:hidden" on:click={toggleSidebar}></div>
@@ -505,5 +505,11 @@
   :global(.route-transition) {
     transition: none !important;
     animation: none !important;
+  }
+
+  @media (max-width: 767px) {
+    .admin-grid {
+      grid-template-columns: 0px 1fr !important;
+    }
   }
 </style>

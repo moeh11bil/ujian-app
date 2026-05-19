@@ -331,8 +331,8 @@
 
         <!-- Pagination -->
         {#if totalPages > 1}
-          <div class="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-100">
-            <p class="text-sm text-gray-600">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-2 px-6 py-4 bg-gray-50 border-t border-gray-100">
+            <p class="text-sm text-gray-600 whitespace-nowrap">
               Halaman {currentPage} dari {totalPages}
             </p>
             <div class="flex items-center gap-1">

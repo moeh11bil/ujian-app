@@ -442,11 +442,17 @@
                         </svg>
                         <span>{exam.jumlah_soal ?? 0} Soal</span>
                       </div>
-                      <div class="flex items-center space-x-2 text-gray-600">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div class="flex items-center space-x-2 text-gray-600 min-w-0">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
-                        <span>{exam.waktu_mulai ? new Date(exam.waktu_mulai).toLocaleString('id-ID') : '-'}</span>
+                        <span class="truncate">{exam.waktu_mulai ? new Date(exam.waktu_mulai).toLocaleString('id-ID') : '-'}</span>
+                      </div>
+                      <div class="flex items-center space-x-2 text-gray-600 min-w-0">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="truncate">{exam.waktu_selesai ? new Date(exam.waktu_selesai).toLocaleString('id-ID') : '-'}</span>
                       </div>
                       <div class="flex items-center space-x-2 text-gray-600">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -463,8 +469,8 @@
                     </div>
                   </div>
                   
-                  <!-- Actions -->
-                  <div class="flex items-center gap-2">
+                   <!-- Actions -->
+                   <div class="flex items-center gap-2 flex-wrap">
                     <button 
                       on:click={() => toggleStatus(exam)} 
                       class="group relative px-3 py-1.5 text-xs font-semibold rounded-full transition-all duration-300 {exam.status === 'aktif' ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}"

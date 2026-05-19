@@ -840,7 +840,7 @@
                         {startIndex + idx + 1}
                       </td>
                       <td class="px-4 py-2">
-                        <div class="text-sm text-gray-900 truncate max-w-[250px]" title={question.teks_soal}>
+                        <div class="text-sm text-gray-900 truncate max-w-[160px] sm:max-w-[250px]" title={question.teks_soal}>
                           {question.teks_soal}
                         </div>
                        </td>
