@@ -873,69 +873,56 @@
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- Question Numbers Panel -->
         <div class="lg:col-span-1">
-          <div class="bg-white rounded-2xl shadow-lg p-5 sticky top-24 border border-gray-100">
-            <div class="flex items-center space-x-3 mb-5 pb-3 border-b border-gray-200">
-              <div class="w-8 h-8 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+          <details class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden lg:block">
+            <summary class="p-4 font-bold text-gray-800 cursor-pointer flex items-center justify-between bg-white hover:bg-gray-50 transition-colors sticky top-24 z-10">
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </div>
+                <span>Nomor Soal ({questions.length})</span>
               </div>
-              <h2 class="font-bold text-gray-800">Nomor Soal</h2>
-            </div>
-            
-            <div class="grid grid-cols-5 gap-2 mb-6">
-              {#each questions as question, index}
-                <button
-                  on:click={() => goToQuestion(index)}
-                  class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-medium transition-all duration-200 {index === currentQuestionIndex
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md scale-110'
-                    : (answers[question.id] && (
-                        (Array.isArray(answers[question.id]) && answers[question.id].length > 0) ||
-                        (!Array.isArray(answers[question.id]) && answers[question.id] !== '' && answers[question.id]?.trim() !== '')
-                      ))
-                      ? 'bg-green-100 text-green-700 border border-green-200'
-                      : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
-                  }"
-                >
-                  {index + 1}
-                </button>
-              {/each}
-            </div>
+              <svg class="w-5 h-5 text-gray-400 transition-transform duration-200" style="transform: rotate(0deg)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </summary>
+            <div class="p-4 pt-0">
+              <div class="grid grid-cols-5 gap-2 mb-4 pt-4">
+                {#each questions as question, index}
+                  <button
+                    on:click={() => goToQuestion(index)}
+                    class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-medium transition-all duration-200 {index === currentQuestionIndex
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md scale-110'
+                      : (answers[question.id] && (
+                          (Array.isArray(answers[question.id]) && answers[question.id].length > 0) ||
+                          (!Array.isArray(answers[question.id]) && answers[question.id] !== '' && answers[question.id]?.trim() !== '')
+                        ))
+                        ? 'bg-green-100 text-green-700 border border-green-200'
+                        : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+                    }"
+                  >
+                    {index + 1}
+                  </button>
+                {/each}
+              </div>
 
-            <div class="space-y-2 pt-3 border-t border-gray-200">
-              <div class="flex items-center">
-                <div class="w-4 h-4 bg-green-100 border border-green-200 rounded mr-3"></div>
-                <span class="text-xs text-gray-600">Sudah dijawab</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-4 h-4 bg-gray-50 border border-gray-200 rounded mr-3"></div>
-                <span class="text-xs text-gray-600">Belum dijawab</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-4 h-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded mr-3"></div>
-                <span class="text-xs text-gray-600">Soal saat ini</span>
+              <div class="space-y-2 pt-3 border-t border-gray-200">
+                <div class="flex items-center">
+                  <div class="w-4 h-4 bg-green-100 border border-green-200 rounded mr-3"></div>
+                  <span class="text-xs text-gray-600">Sudah dijawab</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-4 h-4 bg-gray-50 border border-gray-200 rounded mr-3"></div>
+                  <span class="text-xs text-gray-600">Belum dijawab</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-4 h-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded mr-3"></div>
+                  <span class="text-xs text-gray-600">Soal saat ini</span>
+                </div>
               </div>
             </div>
-
-            <button
-              on:click={handleFinishExam}
-              disabled={submitting}
-              class="w-full mt-6 py-3 px-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {#if submitting}
-                <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Mengirim...
-              {:else}
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                Selesai & Kirim
-              {/if}
-            </button>
-          </div>
+          </details>
         </div>
 
         <!-- Question Content -->
@@ -1111,6 +1098,25 @@
                       class="py-2.5 px-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                     >
                       Selanjutnya →
+                    </button>
+                  {:else}
+                    <button
+                      on:click={handleFinishExam}
+                      disabled={submitting}
+                      class="py-2.5 px-6 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-medium rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    >
+                      {#if submitting}
+                        <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Mengirim...
+                      {:else}
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Kirim Jawaban
+                      {/if}
                     </button>
                   {/if}
                 </div>
