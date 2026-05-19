@@ -10,6 +10,7 @@ const logger = require('./src/utils/logger');
 
 const path = require('path');
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 const allowedOrigins = process.env.FRONTEND_URL
