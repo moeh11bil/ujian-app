@@ -27,7 +27,8 @@ log "Memulai proses update..."
 cd "$PROJECT_DIR" || { log "Gagal masuk ke direktori $PROJECT_DIR"; exit 1; }
 
 log "Git pull..."
-git pull origin master >> "$LOG_FILE" 2>&1
+git fetch origin master >> "$LOG_FILE" 2>&1
+git reset --hard origin/master >> "$LOG_FILE" 2>&1
 
 log "Install backend dependencies..."
 rm -f "$BACKEND_DIR/node_modules/.package-lock.json"
