@@ -152,7 +152,7 @@ class UserService {
 
   async update(id, data) {
     logger.info({ id, data }, 'Updating user');
-    const { nama, email, role, kelas_id, nisn, no_peserta } = data;
+    const { nama, email, password, role, kelas_id, nisn, no_peserta } = data;
 
     const validRoles = ['admin', 'guru', 'siswa'];
     if (role && !validRoles.includes(role)) {
@@ -175,6 +175,22 @@ class UserService {
       }
     }
 
+    // Hash password if provided
+    let hashedPassword = null;
+    if (password && password.trim() !== '') {
+      const bcrypt = require('bcryptjs');
+      hashedPassword = await bcrypt.hash(password, 10);
+    }
+
+    // Build dynamic update query
+    const updates = ['nama = ?', 'email = ?', 'nisn = ?', 'no_peserta = ?', 'role = ?'];
+    const params = [nama, userEmail, nisn || null, no_peserta || null, role];
+
+    if (hashedPassword) {
+      updates.push('password = ?');
+      params.push(hashedPassword);
+    }
+
     if (kelas_id !== undefined) {
       if (kelas_id !== null && kelas_id !== 0 && kelas_id !== '' && kelas_id !== '0') {
         const existingClass = await db.query('SELECT id FROM kelas WHERE id = ?', [kelas_id]);
@@ -182,12 +198,13 @@ class UserService {
           throw new BadRequestError('Class does not exist');
         }
       }
-
       const classIdForDb = (kelas_id === null || kelas_id === 0 || kelas_id === '' || kelas_id === '0') ? null : kelas_id;
-      await db.query('UPDATE users SET nama = ?, email = ?, nisn = ?, no_peserta = ?, role = ?, kelas_id = ? WHERE id = ?', [nama, userEmail, nisn || null, no_peserta || null, role, classIdForDb, id]);
-    } else {
-      await db.query('UPDATE users SET nama = ?, email = ?, nisn = ?, no_peserta = ?, role = ? WHERE id = ?', [nama, userEmail, nisn || null, no_peserta || null, role, id]);
+      updates.push('kelas_id = ?');
+      params.push(classIdForDb);
     }
+
+    params.push(id);
+    await db.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
 
     logger.info({ userId: id }, 'User updated');
     return { message: 'User updated successfully' };
